@@ -1,0 +1,68 @@
+name: AegisCloak Android Build & Packaging
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build & Package Project AegisCloak
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Make Gradle Wrapper Executable
+        run: chmod +x ./gradlew || true
+
+      - name: Build Debug APK
+        run: |
+          if [ -f "./gradlew" ]; then
+            ./gradlew assembleDebug --stacktrace
+          else
+            gradle assembleDebug --stacktrace
+          fi
+
+      - name: Prepare Release Artifact Bundle
+        run: |
+          mkdir -p build_outputs/apk
+          mkdir -p build_outputs/metadata
+          # Copy generated APK files
+          find app/build/outputs/apk/ -name "*.apk" -exec cp {} build_outputs/apk/ \;
+          # Include build reports and manifests
+          if [ -d "app/build/reports" ]; then
+            cp -r app/build/reports build_outputs/
+          fi
+          # Create project documentation bundle
+          cp README.md build_outputs/metadata/ 2>/dev/null || true
+          cp metadata.json build_outputs/metadata/ 2>/dev/null || true
+          # Zip into designated archive
+          cd build_outputs
+          zip -r ../Project-AegisCloak-Release.zip .
+          cd ..
+          echo "Release zip package created successfully."
+
+      - name: Upload Project-AegisCloak-Release Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Project-AegisCloak-Release
+          path: Project-AegisCloak-Release.zip
+          retention-days: 14
+          if-no-files-found: error

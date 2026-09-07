@@ -1,0 +1,36 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer Stealth Aegis Shield (Cybernetic Tactical Contour) -->
+    <path
+        android:fillColor="#1F2937"
+        android:pathData="M54,25 L78,35 L78,57 C78,71 67,81 54,85 C41,81 30,71 30,57 L30,35 Z"
+        android:strokeWidth="2.5"
+        android:strokeColor="#00F0FF" />
+
+    <!-- Inner Protective Core -->
+    <path
+        android:fillColor="#0D1117"
+        android:pathData="M54,32 L71,40 L71,56 C71,67 63,74 54,77 C45,74 37,67 37,56 L37,40 Z"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FFB000" />
+
+    <!-- Tactical Reticle Crosshairs & Chevron -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M54,42 L54,66 M42,54 L66,54"
+        android:strokeWidth="2.0"
+        android:strokeColor="#00F0FF" />
+
+    <!-- Central Stealth Diamond -->
+    <path
+        android:fillColor="#FFB000"
+        android:pathData="M54,49 L59,54 L54,59 L49,54 Z" />
+
+    <!-- Top & Bottom Pulse Points -->
+    <path
+        android:fillColor="#00F0FF"
+        android:pathData="M54,23 A2,2 0 1,1 54,27 A2,2 0 1,1 54,23 M54,87 A2,2 0 1,1 54,91 A2,2 0 1,1 54,87" />
+</vector>

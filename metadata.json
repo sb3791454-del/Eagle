@@ -1,0 +1,6 @@
+{
+  "name": "AegisCloak",
+  "description": "Tactical privacy utility for high-risk operators featuring kinematic motion mirroring, local VPN sanitizer, and cellular RF sentry.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
