@@ -90,13 +90,13 @@ fun TacticalHudScreen(
                 targetCoordinates = uiState.targetCoordinates,
                 telemetry = uiState.kinematicTelemetry,
                 isCloakActive = uiState.cloakEngaged,
-                onMapCoordinateSelected = { lat, lon ->
+                onMapCoordinateSelected = { lat, lon, customLabel ->
                     viewModel.setTargetCoordinates(
                         TargetCoordinates(
                             latitude = lat,
                             longitude = lon,
                             altitude = uiState.targetCoordinates.altitude,
-                            label = String.format("Tactical Pin [%.4f, %.4f]", lat, lon)
+                            label = customLabel ?: String.format("Tactical Pin [%.4f, %.4f]", lat, lon)
                         ),
                         context
                     )

@@ -22,6 +22,22 @@ enum class ThreatLevel(val label: String, val colorHex: Long) {
     CRITICAL_IMSI_CATCHER("CRITICAL // IMSI-CATCHER DETECTED", 0xFFFF3B30)
 }
 
+enum class MapLayerMode(val displayName: String, val shortCode: String) {
+    GOOGLE_ROADS("Google Road", "ROAD"),
+    DARK_MODE("Dark Road", "DARK"),
+    SATELLITE_HYBRID("Satellite Hybrid", "HYBRID")
+}
+
+data class SearchPlaceResult(
+    val placeId: Long,
+    val displayName: String,
+    val title: String,
+    val subtitle: String,
+    val latitude: Double,
+    val longitude: Double,
+    val type: String
+)
+
 data class TargetCoordinates(
     val latitude: Double = 35.658034,
     val longitude: Double = 139.701636,
