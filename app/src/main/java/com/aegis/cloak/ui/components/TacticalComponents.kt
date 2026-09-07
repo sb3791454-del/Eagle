@@ -26,15 +26,20 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AirplanemodeActive
 import androidx.compose.material.icons.filled.CellTower
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.EditLocation
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material.icons.filled.Warning
+import com.aegis.cloak.model.NetworkAuditTelemetry
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -1006,5 +1011,156 @@ fun IconButtonCustom(
             tint = tint,
             modifier = Modifier.size(18.dp)
         )
+    }
+}
+
+@Composable
+fun NetworkAuditCard(
+    audit: NetworkAuditTelemetry,
+    isCloaked: Boolean,
+    targetCoordinates: TargetCoordinates,
+    onRefreshAudit: () -> Unit,
+    onTestInChrome: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .border(1.dp, TacticalBorder, RoundedCornerShape(8.dp)),
+        colors = CardDefaults.cardColors(containerColor = TacticalCardBg),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Language,
+                        contentDescription = "Network Audit",
+                        tint = TacticalCyan,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "IP & GEOLOCATION VERIFICATION AUDIT",
+                        color = TacticalCyan,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace
+                    )
+                }
+
+                IconButtonCustom(
+                    onClick = onRefreshAudit,
+                    icon = Icons.Default.Refresh,
+                    contentDescription = "Refresh Audit",
+                    tint = if (audit.isQuerying) TacticalAmber else TacticalCyan
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Primary IP & ISP Information
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                TelemetryMetricItem(
+                    label = "PUBLIC EGRESS IP",
+                    value = audit.publicIp,
+                    unit = "IPv4",
+                    valueColor = TacticalAmber,
+                    modifier = Modifier.weight(1.2f)
+                )
+                TelemetryMetricItem(
+                    label = "NETWORK ISP",
+                    value = audit.isp.take(16),
+                    unit = "Carrier",
+                    valueColor = TacticalCyan,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Mock Injection Status vs Carrier IP Explanation
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        if (isCloaked) TacticalGreen.copy(alpha = 0.12f) else TacticalAmber.copy(alpha = 0.12f),
+                        RoundedCornerShape(6.dp)
+                    )
+                    .border(
+                        1.dp,
+                        if (isCloaked) TacticalGreen.copy(alpha = 0.5f) else TacticalAmber.copy(alpha = 0.5f),
+                        RoundedCornerShape(6.dp)
+                    )
+                    .padding(10.dp)
+            ) {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = if (isCloaked) Icons.Default.CheckCircle else Icons.Default.Warning,
+                            contentDescription = "Status",
+                            tint = if (isCloaked) TacticalGreen else TacticalAmber,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (isCloaked) "GPS & FUSED SUBSYSTEM: CLOAKED" else "GPS SUBSYSTEM: STANDBY",
+                            color = if (isCloaked) TacticalGreen else TacticalAmber,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = if (isCloaked)
+                            "• Mock GPS & Fused Providers active at ${targetCoordinates.label} (${String.format("%.4f, %.4f", targetCoordinates.latitude, targetCoordinates.longitude)}).\n• When testing in Chrome, tap 'Allow / Use Precise Location' so Chrome requests Android GPS rather than carrier IP."
+                        else
+                            "• Engage Master Cloak or tap any Preset/Map point to inject coordinates into GPS, Fused, and Network providers.",
+                        color = Color(0xFFE2E8F0),
+                        fontSize = 10.5.sp,
+                        fontFamily = FontFamily.Monospace,
+                        lineHeight = 15.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 1-Tap Geolocation Verification in Chrome / Google Maps
+            Button(
+                onClick = onTestInChrome,
+                colors = ButtonDefaults.buttonColors(containerColor = TacticalCyan),
+                shape = RoundedCornerShape(4.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(38.dp)
+                    .testTag("test_location_in_chrome_button")
+            ) {
+                Icon(
+                    imageVector = Icons.Default.OpenInBrowser,
+                    contentDescription = "Test Geolocation",
+                    tint = Color.Black,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "VERIFY MOCK LOCATION IN CHROME / MAPS",
+                    color = Color.Black,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace
+                )
+            }
+        }
     }
 }

@@ -3,6 +3,9 @@ package com.aegis.cloak.ui
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
+import android.location.Criteria
+import android.location.LocationManager
+import android.location.provider.ProviderProperties
 import android.net.VpnService
 import android.os.Build
 import android.os.Process
@@ -16,6 +19,8 @@ import com.aegis.cloak.model.CloakStatus
 import com.aegis.cloak.model.TacticalUiState
 import com.aegis.cloak.model.TargetCoordinates
 import com.aegis.cloak.model.ThreatLevel
+import com.aegis.cloak.model.VpnState
+import com.aegis.cloak.network.NetworkAuditorEngine
 import com.aegis.cloak.service.CloakVpnService
 import com.aegis.cloak.service.MockLocationService
 import com.aegis.cloak.service.RadioSentryManager
@@ -82,31 +87,77 @@ class TacticalViewModel(
                 }
             }
         }
+
+        // Initialize public network egress audit
+        refreshNetworkAudit()
+    }
+
+    fun refreshNetworkAudit() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                networkAudit = _uiState.value.networkAudit.copy(isQuerying = true)
+            )
+            val audit = NetworkAuditorEngine.auditPublicEgress()
+            _uiState.value = _uiState.value.copy(networkAudit = audit)
+        }
+    }
+
+    fun openChromeVerification(context: Context) {
+        val target = _uiState.value.targetCoordinates
+        NetworkAuditorEngine.openGeolocationVerification(context, target.latitude, target.longitude)
     }
 
     fun checkDeveloperMockPermission(context: Context): Boolean {
-        return try {
-            val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-            val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                appOps.unsafeCheckOpNoThrow(
-                    AppOpsManager.OPSTR_MOCK_LOCATION,
-                    Process.myUid(),
-                    context.packageName
-                )
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val isAllowed = try {
+            val probeProvider = "aegis_mock_probe"
+            try {
+                locationManager.removeTestProvider(probeProvider)
+            } catch (_: Exception) {}
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val properties = ProviderProperties.Builder()
+                    .setPowerUsage(ProviderProperties.POWER_USAGE_LOW)
+                    .setAccuracy(ProviderProperties.ACCURACY_FINE)
+                    .build()
+                locationManager.addTestProvider(probeProvider, properties)
             } else {
                 @Suppress("DEPRECATION")
-                appOps.checkOpNoThrow(
-                    AppOpsManager.OPSTR_MOCK_LOCATION,
-                    Process.myUid(),
-                    context.packageName
+                locationManager.addTestProvider(
+                    probeProvider,
+                    false, false, false, false, true, true, true,
+                    Criteria.POWER_LOW, Criteria.ACCURACY_FINE
                 )
             }
-            val isAllowed = (mode == AppOpsManager.MODE_ALLOWED)
-            _uiState.value = _uiState.value.copy(isDeveloperMockGranted = isAllowed)
-            isAllowed
-        } catch (_: Exception) {
+            locationManager.removeTestProvider(probeProvider)
+            true
+        } catch (e: SecurityException) {
             false
+        } catch (e: Exception) {
+            try {
+                val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+                val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    appOps.unsafeCheckOpNoThrow(
+                        AppOpsManager.OPSTR_MOCK_LOCATION,
+                        Process.myUid(),
+                        context.packageName
+                    )
+                } else {
+                    @Suppress("DEPRECATION")
+                    appOps.checkOpNoThrow(
+                        AppOpsManager.OPSTR_MOCK_LOCATION,
+                        Process.myUid(),
+                        context.packageName
+                    )
+                }
+                mode == AppOpsManager.MODE_ALLOWED
+            } catch (_: Exception) {
+                true
+            }
         }
+
+        _uiState.value = _uiState.value.copy(isDeveloperMockGranted = isAllowed)
+        return isAllowed
     }
 
     fun toggleMasterCloak(enable: Boolean, context: Context) {
@@ -123,7 +174,6 @@ class TacticalViewModel(
                         severity = "WARN",
                         message = "Mock location permission not set in Developer Options"
                     )
-                    return@launch
                 }
 
                 // 1. Start Kinematic Mock Service
@@ -141,20 +191,7 @@ class TacticalViewModel(
                     context.startService(mockIntent)
                 }
 
-                // 2. Start WireGuard Local VPN Sanitizer (if prepared)
-                val vpnPrepared = VpnService.prepare(context) == null
-                if (vpnPrepared) {
-                    val vpnIntent = Intent(context, CloakVpnService::class.java).apply {
-                        action = CloakVpnService.ACTION_CONNECT
-                    }
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        context.startForegroundService(vpnIntent)
-                    } else {
-                        context.startService(vpnIntent)
-                    }
-                }
-
-                // 3. Start Radio Sentry
+                // 2. Start Radio Sentry
                 val sentryManager = RadioSentryManager(context)
                 sentryManager.startMonitoring()
 
@@ -175,11 +212,6 @@ class TacticalViewModel(
                 }
                 context.startService(stopMockIntent)
 
-                val stopVpnIntent = Intent(context, CloakVpnService::class.java).apply {
-                    action = CloakVpnService.ACTION_DISCONNECT
-                }
-                context.startService(stopVpnIntent)
-
                 val sentryManager = RadioSentryManager(context)
                 sentryManager.stopMonitoring()
 
@@ -194,6 +226,48 @@ class TacticalViewModel(
                 )
             }
         }
+    }
+
+    fun toggleVpn(enable: Boolean, context: Context) {
+        viewModelScope.launch {
+            if (enable) {
+                val vpnPrepared = VpnService.prepare(context) == null
+                if (vpnPrepared) {
+                    val vpnIntent = Intent(context, CloakVpnService::class.java).apply {
+                        action = CloakVpnService.ACTION_CONNECT
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        context.startForegroundService(vpnIntent)
+                    } else {
+                        context.startService(vpnIntent)
+                    }
+                }
+            } else {
+                val stopVpnIntent = Intent(context, CloakVpnService::class.java).apply {
+                    action = CloakVpnService.ACTION_DISCONNECT
+                }
+                context.startService(stopVpnIntent)
+            }
+        }
+    }
+
+    fun engageCoordinates(target: TargetCoordinates, context: Context) {
+        _uiState.value = _uiState.value.copy(
+            targetCoordinates = target,
+            showCoordinatesEditDialog = false,
+            showPresetsDialog = false
+        )
+        toggleMasterCloak(true, context)
+
+        val updateIntent = Intent(context, MockLocationService::class.java).apply {
+            action = MockLocationService.ACTION_UPDATE_COORDINATES
+            putExtra(MockLocationService.EXTRA_LATITUDE, target.latitude)
+            putExtra(MockLocationService.EXTRA_LONGITUDE, target.longitude)
+            putExtra(MockLocationService.EXTRA_ALTITUDE, target.altitude)
+        }
+        try {
+            context.startService(updateIntent)
+        } catch (_: Exception) {}
     }
 
     fun setTargetCoordinates(target: TargetCoordinates, context: Context) {
@@ -211,7 +285,9 @@ class TacticalViewModel(
                 putExtra(MockLocationService.EXTRA_LONGITUDE, target.longitude)
                 putExtra(MockLocationService.EXTRA_ALTITUDE, target.altitude)
             }
-            context.startService(updateIntent)
+            try {
+                context.startService(updateIntent)
+            } catch (_: Exception) {}
         }
 
         viewModelScope.launch {

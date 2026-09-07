@@ -6,6 +6,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.location.Location
 import android.os.Build
+import android.os.Bundle
 import android.os.SystemClock
 import com.aegis.cloak.model.KinematicTelemetry
 import com.aegis.cloak.model.TargetCoordinates
@@ -268,6 +269,18 @@ class KinematicEngine(
                 speedAccuracyMetersPerSecond = 0.25f
                 bearingAccuracyDegrees = 3.5f
             }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                elapsedRealtimeUncertaintyNanos = 0.0
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                isMock = true
+            }
+            // Populate GNSS satellites count bundle
+            val extrasBundle = Bundle().apply {
+                putInt("satellites", 14)
+                putInt("maxSatellites", 18)
+            }
+            extras = extrasBundle
         }
         return location
     }

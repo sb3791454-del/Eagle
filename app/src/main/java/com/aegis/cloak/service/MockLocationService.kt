@@ -157,9 +157,13 @@ class MockLocationService : LifecycleService() {
             safeSetupSingleProvider(LocationManager.GPS_PROVIDER)
             try {
                 safeSetupSingleProvider(LocationManager.NETWORK_PROVIDER)
-            } catch (_: Exception) {
-                // Network provider optional
-            }
+            } catch (_: Exception) {}
+            try {
+                safeSetupSingleProvider("fused")
+            } catch (_: Exception) {}
+            try {
+                safeSetupSingleProvider(LocationManager.PASSIVE_PROVIDER)
+            } catch (_: Exception) {}
             true
         } catch (e: SecurityException) {
             _serviceStatus.value = CloakStatus.ERROR_MOCK_PERMISSION_REQUIRED
@@ -175,40 +179,56 @@ class MockLocationService : LifecycleService() {
             locationManager.removeTestProvider(providerName)
         } catch (_: Exception) {}
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val properties = ProviderProperties.Builder()
-                .setHasAltitudeSupport(true)
-                .setHasSpeedSupport(true)
-                .setHasBearingSupport(true)
-                .setPowerUsage(ProviderProperties.POWER_USAGE_LOW)
-                .setAccuracy(ProviderProperties.ACCURACY_FINE)
-                .build()
-            locationManager.addTestProvider(
-                providerName,
-                properties,
-                emptySet()
-            )
-        } else {
-            @Suppress("DEPRECATION")
-            locationManager.addTestProvider(
-                providerName,
-                false, // requiresNetwork
-                false, // requiresSatellite
-                false, // requiresCell
-                false, // hasMonetaryCost
-                true,  // supportsAltitude
-                true,  // supportsSpeed
-                true,  // supportsBearing
-                Criteria.POWER_LOW,
-                Criteria.ACCURACY_FINE
-            )
-        }
-        locationManager.setTestProviderEnabled(providerName, true)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val properties = ProviderProperties.Builder()
+                    .setHasAltitudeSupport(true)
+                    .setHasSpeedSupport(true)
+                    .setHasBearingSupport(true)
+                    .setPowerUsage(ProviderProperties.POWER_USAGE_LOW)
+                    .setAccuracy(ProviderProperties.ACCURACY_FINE)
+                    .build()
+                locationManager.addTestProvider(providerName, properties)
+            } else {
+                @Suppress("DEPRECATION")
+                locationManager.addTestProvider(
+                    providerName,
+                    false, // requiresNetwork
+                    false, // requiresSatellite
+                    false, // requiresCell
+                    false, // hasMonetaryCost
+                    true,  // supportsAltitude
+                    true,  // supportsSpeed
+                    true,  // supportsBearing
+                    Criteria.POWER_LOW,
+                    Criteria.ACCURACY_FINE
+                )
+            }
+            locationManager.setTestProviderEnabled(providerName, true)
+            try {
+                @Suppress("DEPRECATION")
+                locationManager.setTestProviderStatus(
+                    providerName,
+                    2, // LocationProvider.AVAILABLE
+                    null,
+                    System.currentTimeMillis()
+                )
+            } catch (_: Exception) {}
+        } catch (e: SecurityException) {
+            throw e
+        } catch (_: Exception) {}
     }
 
     private fun startInjectionLoop() {
         injectionJob?.cancel()
         injectionJob = lifecycleScope.launch(Dispatchers.Default) {
+            val providers = listOf(
+                LocationManager.GPS_PROVIDER,
+                LocationManager.NETWORK_PROVIDER,
+                "fused",
+                LocationManager.PASSIVE_PROVIDER
+            )
+
             while (isActive && isProviderActive) {
                 val engine = kinematicEngine ?: break
 
@@ -216,22 +236,24 @@ class MockLocationService : LifecycleService() {
                 val deltaMeters = engine.updateContinuousKinematics()
                 val isMoving = deltaMeters > 0.05 || engine.currentSpeedMps > 0.3f
 
-                // 2. Synthesize mock location payload
-                val mockGpsLocation = engine.createFusedMockLocation(LocationManager.GPS_PROVIDER)
-                val mockNetLocation = engine.createFusedMockLocation(LocationManager.NETWORK_PROVIDER)
-
-                // 3. Inject to Android Location Subsystem
-                try {
-                    locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, mockGpsLocation)
+                // 2. Synthesize & Inject mock location payload to all providers
+                var anyInjected = false
+                for (prov in providers) {
                     try {
-                        locationManager.setTestProviderLocation(LocationManager.NETWORK_PROVIDER, mockNetLocation)
+                        val mockLoc = engine.createFusedMockLocation(prov)
+                        locationManager.setTestProviderLocation(prov, mockLoc)
+                        anyInjected = true
+                    } catch (e: SecurityException) {
+                        _serviceStatus.value = CloakStatus.ERROR_MOCK_PERMISSION_REQUIRED
+                        return@launch
                     } catch (_: Exception) {}
-                } catch (e: SecurityException) {
-                    _serviceStatus.value = CloakStatus.ERROR_MOCK_PERMISSION_REQUIRED
-                    break
-                } catch (_: Exception) {}
+                }
 
-                // 4. Expose live telemetry to UI
+                if (anyInjected && _serviceStatus.value != CloakStatus.ACTIVE_CLOAKED) {
+                    _serviceStatus.value = CloakStatus.ACTIVE_CLOAKED
+                }
+
+                // 3. Expose live telemetry to UI
                 val snapshot = engine.getTelemetrySnapshot(isMoving, deltaMeters)
                 _telemetryState.value = snapshot
 
@@ -260,12 +282,18 @@ class MockLocationService : LifecycleService() {
 
         unregisterSensors()
 
-        try {
-            locationManager.removeTestProvider(LocationManager.GPS_PROVIDER)
-        } catch (_: Exception) {}
-        try {
-            locationManager.removeTestProvider(LocationManager.NETWORK_PROVIDER)
-        } catch (_: Exception) {}
+        val providers = listOf(
+            LocationManager.GPS_PROVIDER,
+            LocationManager.NETWORK_PROVIDER,
+            "fused",
+            LocationManager.PASSIVE_PROVIDER
+        )
+        for (prov in providers) {
+            try {
+                locationManager.setTestProviderEnabled(prov, false)
+                locationManager.removeTestProvider(prov)
+            } catch (_: Exception) {}
+        }
 
         _serviceStatus.value = CloakStatus.DISENGAGED
         stopForeground(STOP_FOREGROUND_REMOVE)

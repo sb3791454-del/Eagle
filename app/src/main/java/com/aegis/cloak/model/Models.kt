@@ -100,6 +100,15 @@ data class CellularTelemetry(
     val lastStateChangeTimestamp: Long = System.currentTimeMillis()
 )
 
+data class NetworkAuditTelemetry(
+    val publicIp: String = "Detecting IP...",
+    val isp: String = "Cellular Carrier / ISP",
+    val city: String = "Local Node",
+    val country: String = "",
+    val isQuerying: Boolean = false,
+    val lastAuditTimestamp: Long = 0L
+)
+
 data class TacticalUiState(
     val cloakEngaged: Boolean = false,
     val cloakStatus: CloakStatus = CloakStatus.DISENGAGED,
@@ -107,6 +116,7 @@ data class TacticalUiState(
     val kinematicTelemetry: KinematicTelemetry = KinematicTelemetry(),
     val vpnTelemetry: VpnTelemetry = VpnTelemetry(),
     val cellularTelemetry: CellularTelemetry = CellularTelemetry(),
+    val networkAudit: NetworkAuditTelemetry = NetworkAuditTelemetry(),
     val isDeveloperMockGranted: Boolean = false,
     val requiredPermissionsGranted: Boolean = false,
     val driftFactorMultiplier: Float = 1.0f,

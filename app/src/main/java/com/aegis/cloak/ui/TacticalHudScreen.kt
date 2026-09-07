@@ -25,6 +25,7 @@ import com.aegis.cloak.ui.components.CoordinatesControlPanel
 import com.aegis.cloak.ui.components.DeveloperMockPermissionBanner
 import com.aegis.cloak.ui.components.KinematicMetricsCard
 import com.aegis.cloak.ui.components.ManualCoordinatesDialog
+import com.aegis.cloak.ui.components.NetworkAuditCard
 import com.aegis.cloak.ui.components.TacticalHeader
 import com.aegis.cloak.ui.components.TacticalMasterEngageCard
 import com.aegis.cloak.ui.components.VpnKillSwitchCard
@@ -91,15 +92,13 @@ fun TacticalHudScreen(
                 telemetry = uiState.kinematicTelemetry,
                 isCloakActive = uiState.cloakEngaged,
                 onMapCoordinateSelected = { lat, lon, customLabel ->
-                    viewModel.setTargetCoordinates(
-                        TargetCoordinates(
-                            latitude = lat,
-                            longitude = lon,
-                            altitude = uiState.targetCoordinates.altitude,
-                            label = customLabel ?: String.format("Tactical Pin [%.4f, %.4f]", lat, lon)
-                        ),
-                        context
+                    val newTarget = TargetCoordinates(
+                        latitude = lat,
+                        longitude = lon,
+                        altitude = uiState.targetCoordinates.altitude,
+                        label = customLabel ?: String.format("Tactical Pin [%.4f, %.4f]", lat, lon)
                     )
+                    viewModel.engageCoordinates(newTarget, context)
                 },
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
@@ -110,7 +109,7 @@ fun TacticalHudScreen(
             CoordinatesControlPanel(
                 targetCoordinates = uiState.targetCoordinates,
                 onPresetSelected = { preset ->
-                    viewModel.setTargetCoordinates(preset, context)
+                    viewModel.engageCoordinates(preset, context)
                 },
                 onOpenEditDialog = { viewModel.showCoordinatesEditDialog(true) },
                 modifier = Modifier.padding(horizontal = 16.dp)
@@ -118,7 +117,19 @@ fun TacticalHudScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // 6. Kinematic Motion Mirroring Telemetry HUD Card
+            // 6. Network & Geolocation Verification Audit Card
+            NetworkAuditCard(
+                audit = uiState.networkAudit,
+                isCloaked = uiState.cloakEngaged,
+                targetCoordinates = uiState.targetCoordinates,
+                onRefreshAudit = { viewModel.refreshNetworkAudit() },
+                onTestInChrome = { viewModel.openChromeVerification(context) },
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // 7. Kinematic Motion Mirroring Telemetry HUD Card
             KinematicMetricsCard(
                 telemetry = uiState.kinematicTelemetry,
                 driftFactor = uiState.driftFactorMultiplier,
@@ -130,7 +141,7 @@ fun TacticalHudScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // 7. Network Sanitizer & WireGuard Local VPN Bridge Card
+            // 8. Network Sanitizer & WireGuard Local VPN Bridge Card
             VpnKillSwitchCard(
                 telemetry = uiState.vpnTelemetry,
                 modifier = Modifier.padding(horizontal = 16.dp)
@@ -138,7 +149,7 @@ fun TacticalHudScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // 8. Cellular Radio Sentry & IMSI-Catcher Alert Card
+            // 9. Cellular Radio Sentry & IMSI-Catcher Alert Card
             CellularSentryCard(
                 telemetry = uiState.cellularTelemetry,
                 onAirplaneModeClick = { viewModel.openAirplaneSettings(context) },
@@ -152,7 +163,7 @@ fun TacticalHudScreen(
                 initialTarget = uiState.targetCoordinates,
                 onDismiss = { viewModel.showCoordinatesEditDialog(false) },
                 onApply = { newTarget ->
-                    viewModel.setTargetCoordinates(newTarget, context)
+                    viewModel.engageCoordinates(newTarget, context)
                 }
             )
         }

@@ -71,15 +71,17 @@ class CloakVpnService : VpnService() {
         )
 
         try {
-            // Configure WireGuard local bridge TUN interface with strict Kill-Switch & DoH DNS
+            // Configure WireGuard local bridge TUN interface for DNS & WebRTC Leak Protection
             val builder = Builder()
                 .setSession("Project AegisCloak Guard")
                 .setMtu(1420)
                 .addAddress("10.13.37.2", 24)
-                .addRoute("0.0.0.0", 0) // Capture all IPv4 egress
+                .addRoute("1.1.1.1", 32) // Route Cloudflare DoH endpoint through guard
+                .addRoute("9.9.9.9", 32) // Route Quad9 DNS endpoint through guard
+                .addRoute("8.8.8.8", 32) // Route Google DNS endpoint through guard
                 .addDnsServer("1.1.1.1") // Cloudflare Encrypted DNS endpoint
                 .addDnsServer("9.9.9.9") // Quad9 Privacy DNS
-                .setBlocking(true) // Android hardware blocking kill-switch
+                .setBlocking(false)
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 builder.setMetered(false)
