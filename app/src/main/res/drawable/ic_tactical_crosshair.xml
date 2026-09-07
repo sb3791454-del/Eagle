@@ -1,0 +1,39 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- Outer high-contrast black backdrop for maximum visibility on light and dark map tiles -->
+    <path
+        android:fillColor="#FF080C10"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.5"
+        android:pathData="M24,4 A20,20 0 1,0 24,44 A20,20 0 1,0 24,4 Z" />
+
+    <!-- Tactical Cyan Reticle Ring -->
+    <path
+        android:strokeColor="#FF00F0FF"
+        android:strokeWidth="2.5"
+        android:fillColor="#2200F0FF"
+        android:pathData="M24,8 A16,16 0 1,0 24,40 A16,16 0 1,0 24,8 Z" />
+
+    <!-- Crosshair Ticks (North, South, West, East) -->
+    <path
+        android:strokeColor="#FF00F0FF"
+        android:strokeWidth="2"
+        android:pathData="M24,2 L24,10 M24,38 L24,46 M2,24 L10,24 M38,24 L46,24" />
+
+    <!-- Inner Target Ring -->
+    <path
+        android:strokeColor="#FFFFB300"
+        android:strokeWidth="1.8"
+        android:fillColor="#00000000"
+        android:pathData="M24,16 A8,8 0 1,0 24,32 A8,8 0 1,0 24,16 Z" />
+
+    <!-- High-Luminance Center Bullseye Dot -->
+    <path
+        android:fillColor="#FFFF3B30"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.2"
+        android:pathData="M24,21 A3,3 0 1,0 24,27 A3,3 0 1,0 24,21 Z" />
+</vector>

@@ -1,0 +1,23 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="40dp"
+    android:height="40dp"
+    android:viewportWidth="40"
+    android:viewportHeight="40">
+    <!-- Directional Navigation Heading Arrow with Glowing Ring -->
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.5"
+        android:fillColor="#3300E676"
+        android:pathData="M20,6 A14,14 0 1,0 20,34 A14,14 0 1,0 20,6 Z" />
+    <path
+        android:strokeColor="#FF00E676"
+        android:strokeWidth="2"
+        android:fillColor="#00000000"
+        android:pathData="M20,9 A11,11 0 1,0 20,31 A11,11 0 1,0 20,9 Z" />
+    <!-- Sharp Tactical Heading Arrow -->
+    <path
+        android:fillColor="#FF00E676"
+        android:strokeColor="#FF080C10"
+        android:strokeWidth="1.2"
+        android:pathData="M20,8 L28,27 L20,23 L12,27 Z" />
+</vector>

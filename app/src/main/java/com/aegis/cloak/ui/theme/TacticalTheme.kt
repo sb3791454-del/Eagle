@@ -11,22 +11,23 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Tactical Military OLED Palette
+// Tactical Military OLED Palette - High Contrast & Direct Sunlight Legibility
 val TacticalDarkBg = Color(0xFF080C10)
-val TacticalSurface = Color(0xFF0D1117)
+val TacticalSurface = Color(0xFF1E2630)
 val TacticalCardBg = Color(0xFF161B22)
 val TacticalBorder = Color(0xFF30363D)
 val TacticalCyan = Color(0xFF00F0FF)
 val TacticalCyanGlow = Color(0x3300F0FF)
-val TacticalAmber = Color(0xFFFFB000)
-val TacticalAmberGlow = Color(0x33FFB000)
+val TacticalAmber = Color(0xFFFFB300)
+val TacticalAmberGlow = Color(0x33FFB300)
 val TacticalCrimson = Color(0xFFFF3B30)
 val TacticalCrimsonGlow = Color(0x33FF3B30)
 val TacticalGreen = Color(0xFF00E676)
 val TacticalGreenGlow = Color(0x3300E676)
-val TacticalTextPrimary = Color(0xFFF0F6FC)
-val TacticalTextSecondary = Color(0xFF8B949E)
-val TacticalTextMuted = Color(0xFF484F58)
+val TacticalTextPrimary = Color(0xFFFFFFFF)
+val TacticalTextSecondary = Color(0xFFE2E8F0)
+val TacticalTextMuted = Color(0xFF94A3B8)
+val TacticalTextMutedLighter = Color(0xFFCBD5E1)
 
 private val TacticalColorScheme = darkColorScheme(
     primary = TacticalCyan,

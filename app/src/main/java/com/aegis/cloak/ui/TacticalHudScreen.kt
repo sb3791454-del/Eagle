@@ -96,7 +96,7 @@ fun TacticalHudScreen(
                             latitude = lat,
                             longitude = lon,
                             altitude = uiState.targetCoordinates.altitude,
-                            label = "Custom Pin // Lat: ${String.format("%.4f", lat)}"
+                            label = String.format("Tactical Pin [%.4f, %.4f]", lat, lon)
                         ),
                         context
                     )

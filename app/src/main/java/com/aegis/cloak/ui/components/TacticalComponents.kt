@@ -4,6 +4,7 @@ import android.content.Intent
 import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -306,18 +307,21 @@ fun KinematicMetricsCard(
                     label = "WALK SPEED",
                     value = String.format("%.1f", telemetry.currentSpeedKmh),
                     unit = "km/h",
+                    valueColor = TacticalAmber,
                     modifier = Modifier.weight(1f)
                 )
                 TelemetryMetricItem(
                     label = "STEPS MIRRORED",
                     value = "${telemetry.stepCount}",
                     unit = "steps",
+                    valueColor = TacticalGreen,
                     modifier = Modifier.weight(1f)
                 )
                 TelemetryMetricItem(
                     label = "HEADING",
                     value = String.format("%.0f°", telemetry.headingDegrees),
                     unit = "azimuth",
+                    valueColor = TacticalCyan,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -332,24 +336,27 @@ fun KinematicMetricsCard(
                     label = "DISPLACEMENT",
                     value = String.format("%.1f", telemetry.totalDisplacementMeters),
                     unit = "meters",
+                    valueColor = TacticalAmber,
                     modifier = Modifier.weight(1f)
                 )
                 TelemetryMetricItem(
                     label = "GAUSSIAN DRIFT",
                     value = String.format("±%.1f", telemetry.gaussianDriftMeters),
                     unit = "jitter m",
+                    valueColor = TacticalGreen,
                     modifier = Modifier.weight(1f)
                 )
                 TelemetryMetricItem(
                     label = "ACCURACY",
                     value = String.format("±%.1f", telemetry.horizontalAccuracyMeters),
                     unit = "WGS84 m",
+                    valueColor = TacticalCyan,
                     modifier = Modifier.weight(1f)
                 )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(color = TacticalBorder, thickness = 0.8.dp)
+            HorizontalDivider(color = TacticalBorder, thickness = 1.dp)
             Spacer(modifier = Modifier.height(10.dp))
 
             // Atmospheric Gaussian Drift Variance Slider
@@ -360,14 +367,15 @@ fun KinematicMetricsCard(
             ) {
                 Text(
                     text = "ATMOSPHERIC DRIFT INTENSITY",
-                    color = TacticalTextSecondary,
+                    color = Color.White,
                     fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
                     fontFamily = FontFamily.Monospace
                 )
                 Text(
                     text = String.format("%.1fx", driftFactor),
                     color = TacticalAmber,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily.Monospace
                 )
@@ -394,19 +402,23 @@ fun TelemetryMetricItem(
     label: String,
     value: String,
     unit: String,
+    valueColor: Color = TacticalAmber,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.padding(4.dp)) {
         Text(
             text = label,
-            color = TacticalTextMuted,
+            color = Color(0xFFCBD5E1),
             fontSize = 9.sp,
-            fontFamily = FontFamily.Monospace
+            fontWeight = FontWeight.SemiBold,
+            fontFamily = FontFamily.Monospace,
+            letterSpacing = 0.5.sp
         )
+        Spacer(modifier = Modifier.height(2.dp))
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
                 text = value,
-                color = TacticalTextPrimary,
+                color = valueColor,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.Monospace
@@ -414,8 +426,9 @@ fun TelemetryMetricItem(
             Spacer(modifier = Modifier.width(3.dp))
             Text(
                 text = unit,
-                color = TacticalTextSecondary,
+                color = TacticalGreen,
                 fontSize = 10.sp,
+                fontWeight = FontWeight.Medium,
                 fontFamily = FontFamily.Monospace,
                 modifier = Modifier.padding(bottom = 1.dp)
             )
@@ -465,7 +478,7 @@ fun VpnKillSwitchCard(
                     modifier = Modifier
                         .clip(RoundedCornerShape(4.dp))
                         .background(if (isSecured) TacticalGreen.copy(alpha = 0.2f) else TacticalAmber.copy(alpha = 0.2f))
-                        .border(0.8.dp, if (isSecured) TacticalGreen else TacticalAmber, RoundedCornerShape(4.dp))
+                        .border(1.dp, if (isSecured) TacticalGreen else TacticalAmber, RoundedCornerShape(4.dp))
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
@@ -488,18 +501,21 @@ fun VpnKillSwitchCard(
                     label = "PACKETS SANITIZED",
                     value = "${telemetry.packetsSanitized}",
                     unit = "pkts",
+                    valueColor = TacticalGreen,
                     modifier = Modifier.weight(1f)
                 )
                 TelemetryMetricItem(
                     label = "DOH DNS ENCRYPTED",
                     value = "${telemetry.dnsQueriesSecured}",
                     unit = "queries",
+                    valueColor = TacticalCyan,
                     modifier = Modifier.weight(1f)
                 )
                 TelemetryMetricItem(
                     label = "WEBRTC LEAKS BLOCKED",
                     value = "${telemetry.webrtcLeaksBlocked}",
                     unit = "STUN drops",
+                    valueColor = TacticalAmber,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -590,18 +606,21 @@ fun CellularSentryCard(
                     label = "CELL TOWER ID",
                     value = "${telemetry.cellId}",
                     unit = "CID",
+                    valueColor = TacticalCyan,
                     modifier = Modifier.weight(1f)
                 )
                 TelemetryMetricItem(
                     label = "TAC / LAC",
                     value = "${telemetry.lacTac}",
                     unit = "AreaCode",
+                    valueColor = TacticalAmber,
                     modifier = Modifier.weight(1f)
                 )
                 TelemetryMetricItem(
                     label = "SIGNAL POWER",
                     value = "${telemetry.signalDbm}",
                     unit = "dBm",
+                    valueColor = TacticalGreen,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -613,12 +632,12 @@ fun CellularSentryCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(if (isThreat) TacticalCrimson.copy(alpha = 0.15f) else TacticalSurface, RoundedCornerShape(4.dp))
-                    .border(0.8.dp, if (isThreat) TacticalCrimson else TacticalBorder, RoundedCornerShape(4.dp))
+                    .border(1.dp, if (isThreat) TacticalCrimson else TacticalBorder, RoundedCornerShape(4.dp))
                     .padding(8.dp)
             ) {
                 Text(
                     text = telemetry.threatReason,
-                    color = if (isThreat) TacticalCrimson else TacticalTextSecondary,
+                    color = if (isThreat) TacticalCrimson else Color(0xFFE2E8F0),
                     fontSize = 11.sp,
                     fontFamily = FontFamily.Monospace
                 )
@@ -694,9 +713,10 @@ fun CoordinatesControlPanel(
                 OutlinedButton(
                     onClick = onOpenEditDialog,
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = TacticalAmber),
+                    border = BorderStroke(1.dp, TacticalAmber),
                     shape = RoundedCornerShape(4.dp),
                     modifier = Modifier
-                        .height(30.dp)
+                        .height(32.dp)
                         .testTag("edit_coordinates_button")
                 ) {
                     Icon(
@@ -709,7 +729,9 @@ fun CoordinatesControlPanel(
                     Text(
                         text = "MANUAL",
                         fontSize = 10.sp,
-                        fontFamily = FontFamily.Monospace
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        color = TacticalAmber
                     )
                 }
             }
@@ -724,7 +746,7 @@ fun CoordinatesControlPanel(
             ) {
                 TargetCoordinates.PRESETS.forEach { preset ->
                     val isSelected = targetCoordinates.label == preset.label
-                    val chipBg = if (isSelected) TacticalCyan.copy(alpha = 0.2f) else TacticalSurface
+                    val chipBg = if (isSelected) TacticalCyan.copy(alpha = 0.25f) else Color(0xFF1E2630)
                     val chipBorder = if (isSelected) TacticalCyan else TacticalBorder
 
                     Box(
@@ -739,9 +761,9 @@ fun CoordinatesControlPanel(
                     ) {
                         Text(
                             text = preset.label,
-                            color = if (isSelected) TacticalCyan else TacticalTextSecondary,
+                            color = if (isSelected) TacticalCyan else Color(0xFFE2E8F0),
                             fontSize = 11.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                             fontFamily = FontFamily.Monospace
                         )
                     }
